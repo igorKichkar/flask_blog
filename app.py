@@ -24,50 +24,53 @@ app.config['SECRET_KEY'] = '12345'
 
 
 @app.route('/')
-def index():
+@app.route('/<string:slug>')
+def index(slug=None):
+    if not slug:
+        return render_template('index.html')
+    else:
+        return render_template(slug + '.html')
+
+
+@app.route('/posts/', methods=('GET', 'POST'))
+@app.route('/posts/<int:post_id>', methods=('GET', 'DELETE', 'PATCH'))
+def posts_api(post_id=None):
     conn = get_db_connection()
-    posts = conn.execute('SELECT * FROM posts').fetchall()
-    conn.close()
-    return render_template('index.html', posts=posts)
+    if request.method == 'GET':
+        if post_id:
+            posts = get_post(post_id)
+        else:
+            posts = conn.execute('SELECT * FROM posts').fetchall()
+        return render_template('posts.html', posts=posts)
 
-
-@app.route('/<int:post_id>')
-def post(post_id):
-    post = get_post(post_id)
-    return render_template('post.html', post=post)
-
-
-@app.route('/create', methods=('GET', 'POST'))
-def create():
-    if request.method == 'POST':
+    elif request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
 
         if not title:
             flash('Title is required!')
         else:
-            conn = get_db_connection()
             conn.execute('INSERT INTO posts (title, content) VALUES (?, ?)',
                          (title, content))
             conn.commit()
             conn.close()
             return redirect(url_for('index'))
 
-    return render_template('create.html')
+    elif request.method == 'DELETE':
+        post = get_post(id)
+        conn.execute('DELETE FROM posts WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        flash('"{}" Был успешно удален!'.format(post['title']))
+        return redirect(url_for('index'))
 
-
-@app.route('/<int:id>/edit', methods=('GET', 'POST'))
-def edit(id):
-    post = get_post(id)
-
-    if request.method == 'POST':
+    elif request.method == 'PATCH':
         title = request.form['title']
         content = request.form['content']
 
         if not title:
             flash('Title is required!')
         else:
-            conn = get_db_connection()
             conn.execute('UPDATE posts SET title = ?, content = ?'
                          ' WHERE id = ?',
                          (title, content, id))
@@ -75,18 +78,10 @@ def edit(id):
             conn.close()
             return redirect(url_for('index'))
 
-    return render_template('edit.html', post=post)
+    else:
+        flash('Method not allowed')
+        return redirect(url_for('index'))
 
-
-@app.route('/<int:id>/delete', methods=('POST',))
-def delete(id):
-    post = get_post(id)
-    conn = get_db_connection()
-    conn.execute('DELETE FROM posts WHERE id = ?', (id,))
-    conn.commit()
-    conn.close()
-    flash('"{}" Был успешно удален!'.format(post['title']))
-    return redirect(url_for('index'))
 
 if __name__ == ('__main__'):
     app.run(debug=True)
