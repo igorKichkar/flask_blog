@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% for post in posts %}
+    <a href="{{ url_for('posts_api', post_id=post['id'], _method='GET') }}"><h2>{{ post['title'] }}</h2></a>
+    <span class="badge badge-primary">{{ post['created'] }}</span>
+    <p>{{ post['content'] }}</p>
+    {% set edit_post = 'edit-' + post['id']|string %}
+    <a href="{{ url_for('index', slug = edit_post) }}"><p class="fst-italic">Редактировать</p></a>
+    {% endfor %}
+{% endblock %}

@@ -29,7 +29,15 @@ def index(slug=None):
     if not slug:
         return render_template('index.html')
     else:
-        return render_template(slug + '.html')
+        if (slug.find('edit')) > -1:
+            post_id = int(slug.split('-')[1])
+            post = get_post(post_id)
+            slug = slug.split('-')[0]
+            return render_template(slug + '.html', post=post)
+        else:
+            print(slug)
+            
+            return render_template(slug + '.html')
 
 
 @app.route('/posts/', methods=('GET', 'POST'))
@@ -38,10 +46,11 @@ def posts_api(post_id=None):
     conn = get_db_connection()
     if request.method == 'GET':
         if post_id:
-            posts = get_post(post_id)
+            post = get_post(post_id)
+            return render_template('posts-detail.html', post=post)
         else:
             posts = conn.execute('SELECT * FROM posts').fetchall()
-        return render_template('posts.html', posts=posts)
+            return render_template('posts-list.html', posts=posts)
 
     elif request.method == 'POST':
         title = request.form['title']
