@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, url_for, flash, redirect
+import os
 import sqlite3
+from flask import Flask, render_template, request, url_for, flash, redirect, send_from_directory
 from werkzeug.exceptions import abort
 
 
@@ -12,7 +13,7 @@ def get_db_connection():
 def get_post(post_id):
     conn = get_db_connection()
     post = conn.execute('SELECT * FROM posts WHERE id = ?',
-                        (post_id,)).fetchone()
+                        (int(post_id),)).fetchone()
     conn.close()
     if post is None:
         abort(404)
@@ -21,6 +22,12 @@ def get_post(post_id):
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '12345'
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico',
+                               mimetype='image/vnd.microsoft.icon')
 
 
 @app.route('/')
@@ -58,11 +65,10 @@ def posts_api(post_id=None):
             return redirect(url_for('index'))
 
     elif request.method == 'DELETE':
-        post = get_post(id)
-        conn.execute('DELETE FROM posts WHERE id = ?', (id,))
+        conn.execute('DELETE FROM posts WHERE id = ?', (post_id,))
         conn.commit()
         conn.close()
-        flash('"{}" Был успешно удален!'.format(post['title']))
+        flash(f"Пост {post_id} был успешно удален!")
         return redirect(url_for('index'))
 
     elif request.method == 'PATCH':
