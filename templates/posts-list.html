@@ -6,6 +6,5 @@
     <span class="badge badge-primary">{{ post['created'] }}</span>
     <p>{{ post['content'] }}</p>
     {% set edit_post = 'edit-' + post['id']|string %}
-    <a href="{{ url_for('index', slug = edit_post) }}"><p class="fst-italic">Редактировать</p></a>
     {% endfor %}
 {% endblock %}

@@ -29,15 +29,7 @@ def index(slug=None):
     if not slug:
         return render_template('index.html')
     else:
-        if (slug.find('edit')) > -1:
-            post_id = int(slug.split('-')[1])
-            post = get_post(post_id)
-            slug = slug.split('-')[0]
-            return render_template(slug + '.html', post=post)
-        else:
-            print(slug)
-            
-            return render_template(slug + '.html')
+        return render_template(slug + '.html')
 
 
 @app.route('/posts/', methods=('GET', 'POST'))
