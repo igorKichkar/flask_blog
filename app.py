@@ -39,8 +39,8 @@ def index(slug=None):
         return render_template(slug + '.html')
 
 
-@app.route('/posts/', methods=('GET', 'POST'))
-@app.route('/posts/<int:post_id>', methods=('GET', 'DELETE', 'PATCH'))
+@app.route('/posts/', methods=('GET', 'POST', 'DELETE', 'PATCH'))
+@app.route('/posts/<int:post_id>')
 def posts_api(post_id=None):
     conn = get_db_connection()
     if request.method == 'GET':
@@ -65,22 +65,34 @@ def posts_api(post_id=None):
             return redirect(url_for('index'))
 
     elif request.method == 'DELETE':
+        input_json = request.get_json(force=True) 
+        dictToReturn = {
+                        "post_id" : input_json["post_id"]
+                       }
+        post_id = int(dictToReturn["post_id"])
+        post = get_post(post_id)
         conn.execute('DELETE FROM posts WHERE id = ?', (post_id,))
         conn.commit()
         conn.close()
-        flash(f"Пост {post_id} был успешно удален!")
         return redirect(url_for('index'))
 
     elif request.method == 'PATCH':
-        title = request.form['title']
-        content = request.form['content']
+        input_json = request.get_json(force=True) 
+        dictToReturn = {
+                        "post_id" : input_json["post_id"],
+                        'title' : input_json['title'],
+                        'content' : input_json['content']
+                       }
+        post_id = int(dictToReturn['post_id'])
+        title = dictToReturn['title']
+        content = dictToReturn['content']
 
         if not title:
-            flash('Title is required!')
+            return('Title is required!')
         else:
             conn.execute('UPDATE posts SET title = ?, content = ?'
                          ' WHERE id = ?',
-                         (title, content, id))
+                         (title, content, post_id))
             conn.commit()
             conn.close()
             return redirect(url_for('index'))
